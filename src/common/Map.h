@@ -31,7 +31,7 @@ typedef bool (*MAP_COMPARE)(PCASC_MAP pMap, void * pvObject, void * pvKey);
 //-----------------------------------------------------------------------------
 // Functions
 
-PCASC_MAP Map_Create(DWORD dwMaxItems, DWORD dwKeyLength, DWORD dwKeyOffset);
+PCASC_MAP Map_Create(ULONGLONG MaxItems, DWORD dwKeyLength, DWORD dwKeyOffset);
 size_t Map_EnumObjects(PCASC_MAP pMap, void **ppvArray);
 void * Map_FindObject(PCASC_MAP pMap, void * pvKey, PDWORD PtrIndex);
 bool Map_InsertObject(PCASC_MAP pMap, void * pvNewObject, void * pvKey);

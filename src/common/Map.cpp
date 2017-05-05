@@ -90,14 +90,14 @@ static bool CompareObject_String(
 //-----------------------------------------------------------------------------
 // Public functions
 
-PCASC_MAP Map_Create(DWORD dwMaxItems, DWORD dwKeyLength, DWORD dwKeyOffset)
+PCASC_MAP Map_Create(ULONGLONG MaxItems, DWORD dwKeyLength, DWORD dwKeyOffset)
 {
     PCASC_MAP pMap;
     size_t cbToAllocate;
     size_t dwTableSize;
 
     // Calculate the size of the table
-    dwTableSize = (dwMaxItems * 3 / 2) | 0x01;
+    dwTableSize = (MaxItems * 3 / 2) | 0x01;
 
     // Allocate new map for the objects
     cbToAllocate = sizeof(CASC_MAP) + (dwTableSize * sizeof(void *));

@@ -19,7 +19,7 @@ typedef struct _CASC_FILE_ENTRY
 {
     ENCODING_KEY EncodingKey;                       // Encoding key
     ULONGLONG FileNameHash;                         // File name hash
-    DWORD dwFileName;                               // Offset of the file name in the name cache
+    ULONGLONG FileName;                             // Offset of the file name in the name cache
 } CASC_FILE_ENTRY, *PCASC_FILE_ENTRY;
 
 struct TRootHandler_Ovr : public TRootHandler
@@ -58,7 +58,7 @@ static int InsertFileEntry(
     // Fill the file entry
     pFileEntry->EncodingKey  = *(PENCODING_KEY)pbEncodingKey;
     pFileEntry->FileNameHash = CalcFileNameHash(szFileName);
-    pFileEntry->dwFileName   = (DWORD)Array_IndexOf(&pRootHandler->FileNames, szFileName);
+    pFileEntry->FileName     = Array_IndexOf(&pRootHandler->FileNames, szFileName);
 
     // Insert the file entry to the map
     assert(Map_FindObject(pRootHandler->pRootMap, &pFileEntry->FileNameHash, NULL) == NULL);
@@ -86,7 +86,7 @@ static LPBYTE OvrHandler_Search(TRootHandler_Ovr * pRootHandler, TCascSearch * p
     {
         // Retrieve the file item
         pFileEntry = (PCASC_FILE_ENTRY)Array_ItemAt(&pRootHandler->FileTable, pSearch->IndexLevel1);
-        strcpy(pSearch->szFileName, (char *)Array_ItemAt(&pRootHandler->FileNames, pFileEntry->dwFileName));        
+        strcpy(pSearch->szFileName, (char *)Array_ItemAt(&pRootHandler->FileNames, pFileEntry->FileName));
         
         // Prepare the pointer to the next search
         pSearch->IndexLevel1++;
@@ -145,7 +145,7 @@ int RootHandler_CreateOverwatch(TCascStorage * hs, LPBYTE pbRootFile, DWORD cbRo
     size_t nLength;
     char szOneLine[0x200];
     char szFileName[MAX_PATH+1];
-    DWORD dwFileCountMax = (DWORD)hs->pEncodingMap->TableSize;
+    ULONGLONG FileCountMax = hs->pEncodingMap->TableSize;
     int nFileNameIndex;
     int nError = ERROR_SUCCESS;
 
@@ -177,7 +177,7 @@ int RootHandler_CreateOverwatch(TCascStorage * hs, LPBYTE pbRootFile, DWORD cbRo
         return nError;
 
     // Create map of ROOT_ENTRY -> FileEntry
-    pRootHandler->pRootMap = Map_Create(dwFileCountMax, sizeof(ULONGLONG), FIELD_OFFSET(CASC_FILE_ENTRY, FileNameHash));
+    pRootHandler->pRootMap = Map_Create(FileCountMax, sizeof(ULONGLONG), FIELD_OFFSET(CASC_FILE_ENTRY, FileNameHash));
     if(pRootHandler->pRootMap == NULL)
         return ERROR_NOT_ENOUGH_MEMORY;
 

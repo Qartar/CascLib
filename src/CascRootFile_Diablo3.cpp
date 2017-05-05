@@ -461,21 +461,21 @@ static int InsertFileEntry(
 static int ParseDirEntries_FileId1(
     TRootHandler_Diablo3 * pRootHandler,
     LPBYTE pbFileEntries,
-    DWORD dwFileEntries,
-    DWORD dwRootDirIndex)
+    ULONGLONG FileEntries,
+    ULONGLONG RootDirIndex)
 {
     PDIABLO3_FILEID1_ENTRY pEntry = (PDIABLO3_FILEID1_ENTRY)pbFileEntries;
     PCASC_FILE_ENTRY pFileEntry;
 
     // Overflow test
-    if((pRootHandler->FileTable.ItemCount + dwFileEntries) >= pRootHandler->FileTable.ItemCountMax)
+    if((pRootHandler->FileTable.ItemCount + FileEntries) >= pRootHandler->FileTable.ItemCountMax)
     {
         assert(false);
         return ERROR_NOT_ENOUGH_MEMORY;
     }
 
     // Parse the all ID1 entries in the file
-    for(DWORD i = 0; i < dwFileEntries; i++, pEntry++)
+    for(ULONGLONG i = 0; i < FileEntries; i++, pEntry++)
     {
         // Insert the file entry to the global list
         pFileEntry = (PCASC_FILE_ENTRY)Array_Insert(&pRootHandler->FileTable, NULL, 1);
@@ -483,7 +483,7 @@ static int ParseDirEntries_FileId1(
 
         // Fill the index entry
         pFileEntry->EncodingKey  = pEntry->EncodingKey;
-        pFileEntry->FileNameHash = MAKE_INDEX64(dwRootDirIndex, pEntry->FileIndex, 0);
+        pFileEntry->FileNameHash = MAKE_INDEX64(RootDirIndex, pEntry->FileIndex, 0);
         pFileEntry->dwFlags      = CASC_ENTRY_SHORT_NAME;
     }
 
@@ -493,21 +493,21 @@ static int ParseDirEntries_FileId1(
 static int ParseDirEntries_FileId2(
     TRootHandler_Diablo3 * pRootHandler,
     LPBYTE pbFileEntries,
-    DWORD dwFileEntries,
-    DWORD dwRootDirIndex)
+    ULONGLONG FileEntries,
+    ULONGLONG RootDirIndex)
 {
     PDIABLO3_FILEID2_ENTRY pEntry = (PDIABLO3_FILEID2_ENTRY)pbFileEntries;
     PCASC_FILE_ENTRY pFileEntry;
 
     // Overflow test
-    if((pRootHandler->FileTable.ItemCount + dwFileEntries) >= pRootHandler->FileTable.ItemCountMax)
+    if((pRootHandler->FileTable.ItemCount + FileEntries) >= pRootHandler->FileTable.ItemCountMax)
     {
         assert(false);
         return ERROR_NOT_ENOUGH_MEMORY;
     }
 
     // Parse the all ID1 entries in the file
-    for(DWORD i = 0; i < dwFileEntries; i++, pEntry++)
+    for(ULONGLONG i = 0; i < FileEntries; i++, pEntry++)
     {
         // Insert the file entry to the global list
         pFileEntry = (PCASC_FILE_ENTRY)Array_Insert(&pRootHandler->FileTable, NULL, 1);
@@ -515,7 +515,7 @@ static int ParseDirEntries_FileId2(
 
         // Fill the index entry
         pFileEntry->EncodingKey  = pEntry->EncodingKey;
-        pFileEntry->FileNameHash = MAKE_INDEX64(dwRootDirIndex, pEntry->FileIndex, pEntry->SubIndex);
+        pFileEntry->FileNameHash = MAKE_INDEX64(RootDirIndex, pEntry->FileIndex, pEntry->SubIndex);
         pFileEntry->dwFlags      = CASC_ENTRY_SHORT_NAME | CASC_ENTRY_HAS_SUBINDEX;
     }
 
@@ -526,8 +526,8 @@ static int ParseDirEntries_Named(
     TRootHandler_Diablo3 * pRootHandler,
     LPBYTE pbFileEntries,
     LPBYTE pbFileEnd,
-    DWORD dwFileEntries,
-    DWORD dwRootDirIndex)
+    ULONGLONG FileEntries,
+    ULONGLONG RootDirIndex)
 {
     char szFileName[MAX_PATH+1];
     char * szNamePtr = szFileName;
@@ -535,7 +535,7 @@ static int ParseDirEntries_Named(
     int nError = ERROR_SUCCESS;
 
     // Overflow test
-    if((pRootHandler->FileTable.ItemCount + dwFileEntries) >= pRootHandler->FileTable.ItemCountMax)
+    if((pRootHandler->FileTable.ItemCount + FileEntries) >= pRootHandler->FileTable.ItemCountMax)
     {
         assert(false);
         return ERROR_NOT_ENOUGH_MEMORY;
@@ -543,9 +543,9 @@ static int ParseDirEntries_Named(
 
     // If we the file is not in the root directory itself,
     // prepare the prefix for the root directory.
-    if(dwRootDirIndex != DIABLO3_INVALID_INDEX)
+    if(RootDirIndex != DIABLO3_INVALID_INDEX)
     {
-        PCASC_FILE_ENTRY pRootEntry = (PCASC_FILE_ENTRY)Array_ItemAt(&pRootHandler->FileTable, dwRootDirIndex);
+        PCASC_FILE_ENTRY pRootEntry = (PCASC_FILE_ENTRY)Array_ItemAt(&pRootHandler->FileTable, RootDirIndex);
         const char * szRootName = (const char *)Array_ItemAt(&pRootHandler->FileNames, pRootEntry->dwFileName);
 
         // Copy the root directory name
@@ -810,7 +810,7 @@ static int ParseDirectoryFile(
     TRootHandler_Diablo3 * pRootHandler,
     LPBYTE pbDirFile,
     LPBYTE pbFileEnd,
-    DWORD dwRootDirIndex)
+    ULONGLONG RootDirIndex)
 {
     DIABLO3_DIR_HEADER DirHeader;
     int nError;
@@ -830,8 +830,8 @@ static int ParseDirectoryFile(
     // We skip inserting them to the name map, because the names are not known yet
     if(DirHeader.pbEntries1 && DirHeader.dwEntries1)
     {
-        assert(dwRootDirIndex != DIABLO3_INVALID_INDEX);
-        nError = ParseDirEntries_FileId1(pRootHandler, DirHeader.pbEntries1, DirHeader.dwEntries1, dwRootDirIndex);
+        assert(RootDirIndex != DIABLO3_INVALID_INDEX);
+        nError = ParseDirEntries_FileId1(pRootHandler, DirHeader.pbEntries1, DirHeader.dwEntries1, RootDirIndex);
         if(nError != ERROR_SUCCESS)
             return nError;
     }
@@ -842,8 +842,8 @@ static int ParseDirectoryFile(
     // We skip inserting them to the name map, because the names are not known yet
     if(DirHeader.pbEntries2 && DirHeader.dwEntries2)
     {
-        assert(dwRootDirIndex != DIABLO3_INVALID_INDEX);
-        nError = ParseDirEntries_FileId2(pRootHandler, DirHeader.pbEntries2, DirHeader.dwEntries2, dwRootDirIndex);
+        assert(RootDirIndex != DIABLO3_INVALID_INDEX);
+        nError = ParseDirEntries_FileId2(pRootHandler, DirHeader.pbEntries2, DirHeader.dwEntries2, RootDirIndex);
         if(nError != ERROR_SUCCESS)
             return nError;
     }
@@ -853,7 +853,7 @@ static int ParseDirectoryFile(
     // and they do not belong to an asset.
     if(DirHeader.pbEntries3 && DirHeader.dwEntries3)
     {
-        nError = ParseDirEntries_Named(pRootHandler, DirHeader.pbEntries3, pbFileEnd, DirHeader.dwEntries3, dwRootDirIndex);
+        nError = ParseDirEntries_Named(pRootHandler, DirHeader.pbEntries3, pbFileEnd, DirHeader.dwEntries3, RootDirIndex);
         if(nError != ERROR_SUCCESS)
             return nError;
     }
